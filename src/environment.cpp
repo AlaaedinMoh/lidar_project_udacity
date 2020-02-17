@@ -61,13 +61,16 @@ void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<Po
     Eigen::Vector4f max_f(25, 7, 20, 1);
     // PointCloud<PointXYZI>::Ptr filteredCloud = processor.CustomFilterCloud(cloud, 0.2f, min_f, max_f);
     PointCloud<PointXYZI>::Ptr filteredCloud = processor.FilterCloud(cloud, 0.2f, min_f, max_f);
-    
+    // renderPointCloud(viewer, filteredCloud, "filtered cloud", Color(0,1,0));
     // pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> customClouds = processor.CustomSegmentPlane(cloud, 100, 0.2f);
-    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 10, 0.2f);
+    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 20, 0.5f);
+    // renderPointCloud(viewer, filteredCloud, "filtered cloud", Color(0,1,0));
+    cout<<"inliniers size = "<<segRslt.first->points.size()<<endl;
+    cout<<"Obstacles size = "<<segRslt.second->points.size()<<endl;
     // renderPointCloud(viewer, customClouds.first, "Obstacles", Color(1, 0, 0));
     // renderPointCloud(viewer, customClouds.second, "Plane", Color(0, 1, 0));
-    renderPointCloud(viewer, segRslt.first, "obstacles", Color(1,0,0));
-    renderPointCloud(viewer, segRslt.second, "plane", Color(0,1,0));
+    renderPointCloud(viewer, segRslt.first, "inliers", Color(1,0,0));
+    renderPointCloud(viewer, segRslt.second, "obstacles", Color(0,1,0));
 }
 
 void ProjectStream(visualization::PCLVisualizer::Ptr& viewer)

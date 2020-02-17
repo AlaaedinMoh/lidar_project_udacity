@@ -36,6 +36,8 @@ public:
 
     typename pcl::PointCloud<PointT>::Ptr FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint);
 
+    unordered_set<int> DoRasnac3D(typename PointCloud<PointT>::Ptr cloud, int maxIteration, float distanceTol);
+    
     pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SeparateClouds(pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud);
 
     pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
@@ -58,7 +60,7 @@ public:
 
     vector<typename PointCloud<PointT>::Ptr> CustomClustering(typename PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
 
-    unordered_set<int> DoRasnan3D(typename PointCloud<PointT>::Ptr cloud, int maxIteration, float distanceTol);
+    
   
 };
 #endif /* PROCESSPOINTCLOUDS_H_ */
