@@ -19,6 +19,8 @@
 #include <chrono>
 #include<unordered_set>
 #include "render/box.h"
+#include "plane3d.h"
+#include "kdtreeProj.h"
 
 using namespace std;
 using namespace pcl;
@@ -35,13 +37,13 @@ public:
     void numPoints(typename pcl::PointCloud<PointT>::Ptr cloud);
 
     typename pcl::PointCloud<PointT>::Ptr FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint);
-
-    unordered_set<int> DoRasnac3D(typename PointCloud<PointT>::Ptr cloud, int maxIteration, float distanceTol);
     
     pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SeparateClouds(pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud);
 
     pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
+    void ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr entireCloud, typename PointCloud<PointT>::Ptr cluster, const vector<bool>& processed, EuclideanKdTree* tree, float dist);
+    
     vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
 
     Box BoundingBox(typename PointCloud<PointT>::Ptr cluster);
@@ -51,16 +53,6 @@ public:
     typename pcl::PointCloud<PointT>::Ptr loadPcd(string file);
 
     vector<boost::filesystem::path> streamPcd(string dataPath);
-    
-    ///Project Methods
-
-    pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> CustomSeparateClouds(PointIndices::Ptr inliers, typename PointCloud<PointT>::Ptr cloud);
-
-    pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> CustomSegmentPlane(typename PointCloud<PointT>::Ptr cloud, int maxIteration, float distThreshold);
-
-    vector<typename PointCloud<PointT>::Ptr> CustomClustering(typename PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
-
-    
   
 };
 #endif /* PROCESSPOINTCLOUDS_H_ */

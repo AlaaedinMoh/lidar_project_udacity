@@ -1,11 +1,9 @@
-/* \author Aaron Brown */
-// Quiz on implementing kd tree
+#pragma once
 
 #include "./render/render.h"
 
-using namspace std;
+using namespace std;
 
-// Structure to represent node of kd tree
 struct Node
 {
 	std::vector<float> point;
@@ -18,11 +16,11 @@ struct Node
 	{}
 };
 
-struct KdTree
+struct EuclideanKdTree
 {
 	Node* root;
 
-	KdTree()
+	EuclideanKdTree()
 	: root(NULL)
 	{}
 
@@ -53,7 +51,7 @@ struct KdTree
 		insertHelper(&root, 0, point, id);
 	}
 
-	void searchHelper(vector<float> target, Node* node, float depth, float dist_tol, vector<int>& ids)
+	void searchHelper(vector<float> target, Node* node, uint depth, float dist_tol, vector<int>& ids)
 	{
 		if(node != NULL)
 		{
@@ -67,6 +65,15 @@ struct KdTree
 					ids.push_back(node->id);
 				}
 			}
+			uint cd = depth%2;
+			if((target[cd]-dist_tol) < node->point[cd])
+			{
+				searchHelper(target, node->left, depth+1, dist_tol, ids);
+			}
+			if((target[cd]+dist_tol)>node->point[cd])
+			{
+				searchHelper(target, node->right, depth+1, dist_tol, ids);
+			}
 		}
 	}
 
@@ -74,10 +81,9 @@ struct KdTree
 	std::vector<int> search(std::vector<float> target, float distanceTol)
 	{
 		std::vector<int> ids;
+		searchHelper(target, root, 0, distanceTol, ids);
 		return ids;
 	}
-	
-
 };
 
 
