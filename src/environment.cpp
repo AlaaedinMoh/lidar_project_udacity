@@ -12,14 +12,6 @@
 using namespace std;
 using namespace pcl;
 
-Color GetClusterColor()
-{
-    srand(time(NULL));
-    float red = rand() % 1 + 0;
-    float green = rand() % 1 + 0;
-    float blue = rand() % 1 + 0;
-    return Color(red, green, blue);
-}
 vector<Color> colors = {Color(1,1,0),Color(0,1,1), Color(1,1,1), Color(0.5,0.5,0), Color(0,0.5,0.5)};
 
 void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<PointXYZI> processor, visualization::PCLVisualizer::Ptr& viewer)
