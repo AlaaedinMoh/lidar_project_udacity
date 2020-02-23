@@ -38,8 +38,7 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
     region.setInputCloud (filteredCloud);
     region.filter(*cloudRegion);
 
-    return filteredCloud;
-
+    return cloudRegion;
 }
 
 template<typename PointT>
@@ -136,16 +135,17 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     return segRslt;
 }
 
-template<typename PointT> void ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr entireCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree* tree, float dist)
+template<typename PointT>
+void ProcessPointClouds<PointT>::ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr obstaclesCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree<PointT>* eTree, float dist)
 {
-//     // processed[pointIndex] = true;
-//     // cluster->Points.push_back(entireCloud->points[pointIndex]);
-//     // vector<int> nearest = tree->search(entireCloud->points[pointIndex], dist);
-//     // for(int id : nearest)
-//     // {
-//     //     if(!processed[id])
-//     //         clusteringHeler(id, entireCloud, cluster, processed, tree, dist);
-//     // }
+     processed[pointIndex] = true;
+     cluster->points.push_back(obstaclesCloud->points[pointIndex]);
+     vector<int> resultIds = eTree->search(obstaclesCloud->points[pointIndex], dist);
+     for(int id : resultIds)
+     {
+         if(!processed[id])
+            ClusteringHelper(id, obstaclesCloud, cluster, processed, eTree, dist);
+     }
 }
 
 template<typename PointT>
@@ -153,15 +153,21 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 {
     vector<typename PointCloud<PointT>::Ptr> clusters;
     vector<bool> processed(cloud->points.size(), false);
-    EuclideanKdTree* eTree = new EuclideanKdTree;
+    EuclideanKdTree<PointT>* eTree = new EuclideanKdTree<PointT>();
+    for(int i = 0; i < cloud->points.size(); i++)
+        eTree->insert(cloud->points[i], i);
+    int i = 1;
     for(int idx = 0; idx < cloud->points.size(); idx++)
     {
         if(processed[idx])
             continue;
-        typename PointCloud<PointT>::Ptr cluster;
-        // ClusteringHelper(idx, cloud, cluster, processed, eTree, clusterTolerance);
-        // ClusteringHelper(cloud, cluster, processed, *eTree, clusterTolerance);
+      typename pcl::PointCloud<PointT>::Ptr cluster(new PointCloud<PointT>());
+      ClusteringHelper(idx, cloud, cluster, processed, eTree, clusterTolerance);
+      clusters.push_back(cluster);
     }
+    eTree->freeResources();
+    delete eTree;
+    return clusters;
 }
 
 

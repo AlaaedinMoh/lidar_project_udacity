@@ -1,91 +1,164 @@
-#pragma once
 
 #include "./render/render.h"
+#include <vector>
 
 using namespace std;
 
+template<typename PointT>
 struct Node
 {
-	std::vector<float> point;
+	PointT point;
 	int id;
-	Node* left;
-	Node* right;
+	Node<PointT>* left;
+	Node<PointT>* right;
 
-	Node(std::vector<float> arr, int setId)
-	:	point(arr), id(setId), left(NULL), right(NULL)
-	{}
+	Node(PointT setPoint, int setId)
+	:	point(setPoint), id(setId), left(NULL), right(NULL)
+	{
+	}
 };
 
+template<typename PointT>
 struct EuclideanKdTree
 {
-	Node* root;
+	Node<PointT>* root;
 
 	EuclideanKdTree()
-	: root(NULL)
-	{}
+	:root(NULL)
+	{
+	}
+	int maxDepth = 0;
 
-	void insertHelper(Node** node, uint depth, vector<float> point, int id)
+	void insertHelper(Node<PointT>** node, uint depth, PointT point, int id)
 	{
 		if(*node == NULL)
 		{
-			*node = new Node(point, id);
+			*node = new Node<PointT>(point, id);
 		}
 		else
 		{
-			uint cd = depth % 2;
-			if(point[cd] < (*node)->point[cd])
+			uint cd = depth % 3;
+			if(cd == 0)
 			{
-				insertHelper(&((*node)->left), depth + 1, point, id);
+				if(point.x < (*node)->point.x)
+				{
+					insertHelper(&((*node)->left), depth+1, point, id);
+				}
+				else
+				{
+					insertHelper(&((*node)->right), depth+1, point, id);
+				}
 			}
-			else
+			if(cd == 1)
 			{
-				insertHelper(&((*node)->right), depth + 1, point, id);
+				if(point.y < (*node)->point.y)
+				{
+					insertHelper(&((*node)->left), depth+1, point, id);
+				}
+				else
+				{
+					insertHelper(&((*node)->right), depth+1, point, id);
+				}
+			}
+			if(cd == 2)
+			{
+				if(point.z < (*node)->point.z)
+				{
+					insertHelper(&((*node)->left), depth+1, point, id);
+				}
+				else
+				{
+					insertHelper(&((*node)->right), depth+1, point, id);
+				}
 			}
 		}
 	}
 
-	void insert(std::vector<float> point, int id)
+	void insert(PointT point, int id)
 	{
-		// TODO: Fill in this function to insert a new point into the tree
-		// the function should create a new node and place correctly with in the root 
 		insertHelper(&root, 0, point, id);
 	}
 
-	void searchHelper(vector<float> target, Node* node, uint depth, float dist_tol, vector<int>& ids)
+	void searchHelper(PointT target, Node<PointT>* node, uint depth, float dist_tol, vector<int>& ids)
 	{
 		if(node != NULL)
 		{
-			if(node->point[0] >= (target[0] - dist_tol) && node->point[0] <= (target[0] + dist_tol)
-			&& node->point[1] >= (target[1] - dist_tol) && node->point[1] <= (target[0] + dist_tol))
+			if(node->point.x >= (target.x - dist_tol) && node->point.x <= (target.x + dist_tol)
+			&& node->point.y >= (target.y - dist_tol) && node->point.y <= (target.y + dist_tol)
+			&& node->point.z >= (target.z - dist_tol) && node->point.z <= (target.z + dist_tol))
 			{
-				float distance = sqrt((node->point[0] - target[0])*(node->point[0] - target[0])
-								    + (node->point[1] - target[1])*(node->point[1] - target[1]));
-				if(distance <= dist_tol)
+				float dx = node->point.x - target.x;
+				float dy = node->point.y - target.y;
+				float dz = node->point.z - target.z;
+				float dist = sqrt(dx*dx + dy*dy + dz*dz);
+				if(dist <= dist_tol)
 				{
 					ids.push_back(node->id);
 				}
 			}
-			uint cd = depth%2;
-			if((target[cd]-dist_tol) < node->point[cd])
+			uint cd = depth%3;
+			if(cd == 0)
 			{
-				searchHelper(target, node->left, depth+1, dist_tol, ids);
+				if((target.x - dist_tol) < node->point.x)
+				{
+					searchHelper(target,node->left, depth+1, dist_tol, ids);
+				}
+				if((target.x + dist_tol) > node->point.x)
+				{
+					searchHelper(target, node->right, depth+1, dist_tol, ids);
+				}
 			}
-			if((target[cd]+dist_tol)>node->point[cd])
+			if(cd == 1)
 			{
-				searchHelper(target, node->right, depth+1, dist_tol, ids);
+				if((target.y - dist_tol) < node->point.y)
+				{
+					searchHelper(target,node->left, depth+1, dist_tol, ids);
+				}
+				if((target.y + dist_tol) > node->point.y)
+				{
+					searchHelper(target, node->right, depth+1, dist_tol, ids);
+				}
+			}
+			if(cd == 2)
+			{
+				if((target.z - dist_tol) < node->point.z)
+				{
+					searchHelper(target,node->left, depth+1, dist_tol, ids);
+				}
+				if((target.z + dist_tol) > node->point.z)
+				{
+					searchHelper(target, node->right, depth+1, dist_tol, ids);
+				}
 			}
 		}
 	}
 
-	// return a list of point ids in the tree that are within distance of target
-	std::vector<int> search(std::vector<float> target, float distanceTol)
+	vector<int> search(PointT target, float distanceTol)
 	{
 		std::vector<int> ids;
 		searchHelper(target, root, 0, distanceTol, ids);
 		return ids;
 	}
+
+	void ResourcesFreeHelper(Node<PointT>** node)
+	{
+		if(*node)
+		{
+			return;
+		}
+		if(!(*node)->right)
+		{
+			ResourcesFreeHelper(&((*node)->right));
+		}
+		if(!(*node)->left)
+		{
+			ResourcesFreeHelper(&((*node)->left));
+		}
+		delete *node;
+	}
+
+	void freeResources()
+	{
+		ResourcesFreeHelper(&root);
+	}
 };
-
-
-
-

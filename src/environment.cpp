@@ -12,16 +12,32 @@
 using namespace std;
 using namespace pcl;
 
+Color GetClusterColor()
+{
+    srand(time(NULL));
+    float red = rand() % 1 + 0;
+    float green = rand() % 1 + 0;
+    float blue = rand() % 1 + 0;
+    return Color(red, green, blue);
+}
+vector<Color> colors = {Color(1,1,0),Color(0,1,1), Color(1,1,1), Color(0.5,0.5,0), Color(0,0.5,0.5)};
+
 void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<PointXYZI> processor, visualization::PCLVisualizer::Ptr& viewer)
 {
-    Eigen::Vector4f min_f(-12, -6, -1, 1);
-    Eigen::Vector4f max_f(25, 6, 10, 1);
+    Eigen::Vector4f min_f(-12, -6.5, -1.8, 1);
+    Eigen::Vector4f max_f(35, 6.5, 5, 1);
     PointCloud<PointXYZI>::Ptr filteredCloud = processor.FilterCloud(cloud, 0.1f, min_f, max_f);
-    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 100, 0.2f);
-    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 1.0, 3, 30);
+    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 50, 0.1f);
+    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.45, 3, 30);
     renderPointCloud(viewer, segRslt.first, "inliers", Color(0,1,0));
-    renderPointCloud(viewer, segRslt.second, "obstacles", Color(1,0,0));
-
+    int i = 0;
+    for(auto cluster : rsltClusters)
+    {
+        renderPointCloud(viewer, cluster, "cluster:" + std::to_string(i), colors[i%5]);
+        Box cBox = processor.BoundingBox(cluster);
+        renderBox(viewer, cBox, i);
+        ++i;
+    }
 }
 
 void ProjectStream(visualization::PCLVisualizer::Ptr& viewer)
@@ -29,24 +45,23 @@ void ProjectStream(visualization::PCLVisualizer::Ptr& viewer)
     ProcessPointClouds<PointXYZI>* customProcessor = new ProcessPointClouds<PointXYZI>();
     vector<boost::filesystem::path> stream = customProcessor->streamPcd("../src/sensors/data/pcd/data_1/");
     
-    PointCloud<PointXYZI>::Ptr streamCloud=customProcessor->loadPcd("../src/sensors/data/pcd/data_1/0000000001.pcd");
-    ProcessProjectBlock(streamCloud, *customProcessor, viewer);    
+    // PointCloud<PointXYZI>::Ptr streamCloud=customProcessor->loadPcd("../src/sensors/data/pcd/data_1/0000000001.pcd");
+    // ProcessProjectBlock(streamCloud, *customProcessor, viewer);    
 
-    // auto streamItr = stream.begin();
-    // PointCloud<PointXYZI>::Ptr streamCloud;
-    // while(!viewer->wasStopped())
-    // {
-    //     viewer->removeAllPointClouds();
-    //     viewer->removeAllShapes();
-    //     streamCloud=customProcessor->loadPcd((*streamItr).string());
-    //     streamItr++;
-    //     if(streamItr==stream.end())
-    //         streamItr=stream.begin();
+    auto streamItr = stream.begin();
+    PointCloud<PointXYZI>::Ptr streamCloud;
+    while(!viewer->wasStopped())
+    {
+        viewer->removeAllPointClouds();
+        viewer->removeAllShapes();
+        streamCloud=customProcessor->loadPcd((*streamItr).string());
+        streamItr++;
+        if(streamItr==stream.end())
+            streamItr=stream.begin();
 
-    //     ProcessProjectBlock(streamCloud, *customProcessor, viewer);
-    
-    //     viewer->spinOnce();
-    // }
+        ProcessProjectBlock(streamCloud, *customProcessor, viewer);
+        viewer->spinOnce();
+    }
     
 }
 
