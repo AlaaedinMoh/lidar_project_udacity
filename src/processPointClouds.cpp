@@ -37,6 +37,24 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
     region.setMax(maxPoint);
     region.setInputCloud (filteredCloud);
     region.filter(*cloudRegion);
+    
+    vector<int> indices;
+    CropBox<PointT> roof;
+    roof.setMin(Eigen::Vector4f(-1.5,-1.7,-1,1));
+    roof.setMax(Eigen::Vector4f(2.6,1.7,-0.4,1));
+    roof.setInputCloud(cloudRegion);
+    roof.filter(indices);
+
+    PointIndices::Ptr inliers(new PointIndices);
+    for(int point : indices)
+    {
+        inliers->indices.push_back(point);
+    }
+    ExtractIndices<PointT> extractor;
+    extractor.setInputCloud(cloudRegion);
+    extractor.setIndices(inliers);
+    extractor.setNegative(true);
+    extractor.filter(*cloudRegion);
 
     return cloudRegion;
 }
@@ -136,16 +154,55 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 }
 
 template<typename PointT>
-void ProcessPointClouds<PointT>::ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr obstaclesCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree<PointT>* eTree, float dist)
+void ProcessPointClouds<PointT>::ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr obstaclesCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree<PointT>* eTree, float dist, float minSize, float maxSize)
 {
+    float xMin,xMax,yMin,yMax,zMin,zMax;
+    xMin = numeric_limits<float>::max();
+    xMax = numeric_limits<float>::min();
+    yMin = numeric_limits<float>::max();
+    yMax = numeric_limits<float>::min();
+    zMin = numeric_limits<float>::max();
+    zMax = numeric_limits<float>::min();
+    // if(cluster->points.size() > 2)
+    // {
+    //     for(auto itr = cluster->points.begin(); itr < cluster->points.end(); itr++)
+    //     {
+    //         // if(itr->x < xMin)
+    //         //     xMin = itr->x;
+    //         // if(itr->x > xMax)
+    //         //     xMax = itr->x;
+    //         // if(itr->y < yMin)
+    //         //     yMin = itr->y;
+    //         // if(itr->y > yMax)
+    //         //     yMax = itr->y;
+    //         // if(itr->z < zMin)
+    //         //     zMin = itr->z;
+    //         // if(itr->z > zMax)
+    //         //     zMax = itr->z;
+    //         xMin = itr->x < xMin ? itr->x : xMin;
+    //         xMax = itr->x > xMax ? itr->x : xMax;
+    //         yMin = itr->y < yMin ? itr->y : yMin;
+    //         yMax = itr->y > yMax ? itr->y : yMax;
+    //         zMin = itr->z < zMin ? itr->z : zMin;
+    //         zMax = itr->z > zMax ? itr->z : zMax;
+    //     }
+    //     if(fabs(xMax - xMin) > maxSize || fabs(yMax - yMin ) > maxSize || fabs(zMax -zMin) > maxSize)
+    //     {
+    //         return;
+    //     }
+    // }
      processed[pointIndex] = true;
      cluster->points.push_back(obstaclesCloud->points[pointIndex]);
      vector<int> resultIds = eTree->search(obstaclesCloud->points[pointIndex], dist);
      for(int id : resultIds)
      {
          if(!processed[id])
-            ClusteringHelper(id, obstaclesCloud, cluster, processed, eTree, dist);
+            ClusteringHelper(id, obstaclesCloud, cluster, processed, eTree, dist, minSize, maxSize);
      }
+    //  if(fabs(xMax - xMin) < minSize || fabs(yMax - yMin ) < minSize || fabs(zMax - zMin) < minSize)
+    //  {
+    //      cluster = NULL;
+    //  }
 }
 
 template<typename PointT>
@@ -162,8 +219,9 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
         if(processed[idx])
             continue;
       typename pcl::PointCloud<PointT>::Ptr cluster(new PointCloud<PointT>());
-      ClusteringHelper(idx, cloud, cluster, processed, eTree, clusterTolerance);
-      clusters.push_back(cluster);
+      ClusteringHelper(idx, cloud, cluster, processed, eTree, clusterTolerance, minSize, maxSize);
+      if(cluster!=NULL)
+         clusters.push_back(cluster);
     }
     eTree->freeResources();
     delete eTree;

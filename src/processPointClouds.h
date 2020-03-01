@@ -18,6 +18,7 @@
 #include <ctime>
 #include <chrono>
 #include <unordered_set>
+#include <limits>
 #include "render/box.h"
 #include "plane3d.h"
 #include "kdtreeProj.h"
@@ -42,7 +43,7 @@ public:
 
     pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
-    void ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr obstaclesCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree<PointT>* eTree, float dist);
+    void ClusteringHelper(int pointIndex, typename PointCloud<PointT>::Ptr obstaclesCloud, typename PointCloud<PointT>::Ptr cluster, vector<bool>& processed, EuclideanKdTree<PointT>* eTree, float dist, float minSize, float maxSize);
     
     vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
 

@@ -20,7 +20,7 @@ void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<Po
     Eigen::Vector4f max_f(35, 6.5, 5, 1);
     PointCloud<PointXYZI>::Ptr filteredCloud = processor.FilterCloud(cloud, 0.1f, min_f, max_f);
     pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 50, 0.1f);
-    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.45, 3, 30);
+    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.45, 1, 5);
     renderPointCloud(viewer, segRslt.first, "inliers", Color(0,1,0));
     int i = 0;
     for(auto cluster : rsltClusters)
@@ -30,6 +30,7 @@ void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<Po
         renderBox(viewer, cBox, i);
         ++i;
     }
+    filteredCloud = NULL;
 }
 
 void ProjectStream(visualization::PCLVisualizer::Ptr& viewer)
@@ -91,11 +92,6 @@ int main (int argc, char** argv)
         CameraAngle setAngle = XY;
         initCamera(setAngle, viewer);
         ProjectStream(viewer);
-
-        while (!viewer->wasStopped ())
-        {
-           viewer->spinOnce ();
-        } 
     }
     catch(exception& exp)
     {
