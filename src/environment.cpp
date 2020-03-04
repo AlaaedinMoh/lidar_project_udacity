@@ -1,11 +1,7 @@
-/* \author Aaron Brown */
-// Create simple 3d highway enviroment using PCL
-// for exploring self-driving car sensors
 
 #include "sensors/lidar.h"
 #include "render/render.h"
 #include "processPointClouds.h"
-// using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
 #include <stdio.h>
 
@@ -16,11 +12,11 @@ vector<Color> colors = {Color(1,1,0),Color(0,1,1), Color(1,1,1), Color(0.5,0.5,0
 
 void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<PointXYZI> processor, visualization::PCLVisualizer::Ptr& viewer)
 {
-    Eigen::Vector4f min_f(-12, -6.5, -1.8, 1);
+    Eigen::Vector4f min_f(-12, -6.5, -2, 1);
     Eigen::Vector4f max_f(35, 6.5, 5, 1);
     PointCloud<PointXYZI>::Ptr filteredCloud = processor.FilterCloud(cloud, 0.1f, min_f, max_f);
     pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 50, 0.1f);
-    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.45, 1, 5);
+    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.2, 3, 30);
     renderPointCloud(viewer, segRslt.first, "inliers", Color(0,1,0));
     int i = 0;
     for(auto cluster : rsltClusters)
@@ -37,9 +33,6 @@ void ProjectStream(visualization::PCLVisualizer::Ptr& viewer)
 {
     ProcessPointClouds<PointXYZI>* customProcessor = new ProcessPointClouds<PointXYZI>();
     vector<boost::filesystem::path> stream = customProcessor->streamPcd("../src/sensors/data/pcd/data_1/");
-    
-    // PointCloud<PointXYZI>::Ptr streamCloud=customProcessor->loadPcd("../src/sensors/data/pcd/data_1/0000000001.pcd");
-    // ProcessProjectBlock(streamCloud, *customProcessor, viewer);    
 
     auto streamItr = stream.begin();
     PointCloud<PointXYZI>::Ptr streamCloud;
