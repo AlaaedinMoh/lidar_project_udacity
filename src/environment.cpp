@@ -12,11 +12,11 @@ vector<Color> colors = {Color(1,1,0),Color(0,1,1), Color(1,1,1), Color(0.5,0.5,0
 
 void ProcessProjectBlock(PointCloud<PointXYZI>::Ptr cloud, ProcessPointClouds<PointXYZI> processor, visualization::PCLVisualizer::Ptr& viewer)
 {
-    Eigen::Vector4f min_f(-12, -6.5, -2, 1);
-    Eigen::Vector4f max_f(35, 6.5, 5, 1);
+    Eigen::Vector4f min_f(-12, -6, -2, 1);
+    Eigen::Vector4f max_f(20, 7, 5, 1);
     PointCloud<PointXYZI>::Ptr filteredCloud = processor.FilterCloud(cloud, 0.1f, min_f, max_f);
-    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 50, 0.1f);
-    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.2, 3, 30);
+    pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segRslt = processor.SegmentPlane(filteredCloud, 50, 0.2f);
+    vector<PointCloud<PointXYZI>::Ptr> rsltClusters = processor.Clustering(segRslt.second, 0.4, 3, 30);
     renderPointCloud(viewer, segRslt.first, "inliers", Color(0,1,0));
     int i = 0;
     for(auto cluster : rsltClusters)

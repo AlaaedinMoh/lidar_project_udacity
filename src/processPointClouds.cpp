@@ -181,7 +181,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
             continue;
       typename pcl::PointCloud<PointT>::Ptr cluster(new PointCloud<PointT>());
       ClusteringHelper(idx, cloud, cluster, processed, eTree, clusterTolerance, minSize, maxSize);
-      if(cluster!=NULL)
+      if(cluster!=NULL && cluster->points.size() > 20)
          clusters.push_back(cluster);
     }
     eTree->freeResources();
